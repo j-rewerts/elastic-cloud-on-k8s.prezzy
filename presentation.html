@@ -149,7 +149,68 @@ curl -u "elastic:$PASSWORD" -k "https://localhost:9200"
 ```
 ###### The -k option turns off certificate verification
 
+
 ---
+
+# Indexing documents
+
+#### Our data
+``` bash
+head -1 council_reports.csv
+```
+
+#### gives us
+
+``` bash
+id,date,source_url,source_title,parent_source_url,parent_source_title,text
+```
+
+---
+
+# Indexing documents
+
+#### Use Python to import the data!
+
+``` bash
+This python utility helps with uploading CSV files of any size to Elasticsearch. This has been tested up to ~2GB. Currently, all fields in the document are indexed and treated as text. In the future, controlling how the fields are indexed from the command line would be a handy feature.
+
+Example on localhost
+python csv-to-elasticsearch.py -i my-index -c localhost:9200,localhost:9201 -f my.csv
+
+Example over https
+python csv-to-elasticsearch.py -i my-index -c https://sub.domain.ca/es -f my.csv
+
+Required fields
+-i (--index) The index to write documents to.
+-c (--connect) The Elasticsearch host string.
+  Ex. '-c localhost:9200,localhost:9201,localhost:9202'
+-f (--file) The CSV file. 
+
+Optional fields
+-h (--help) Print this helpful text field.
+-u (--user) The user to connect to Elasticsearch as.
+-p (--password) The user's password.
+```
+
+---
+
+# Indexing documents
+
+#### Import our data
+
+``` bash
+python src/csv-to-es.py -i council_reports -c https://localhost:9200 -f council_reports.csv -u elastic -p $PASSWORD
+```
+
+---
+
+# Indexing documents
+
+#### Check on our indices
+
+``` bash
+curl -u "elastic:$PASSWORD" -k "https://localhost:9200/_cat/indices?v"
+```
 
     </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js">
