@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Title</title>
+    <meta charset="utf-8">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      code {
+        white-space : pre-wrap !important;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Elastic Cloud on Kubernetes
+
+---
+
+class: center, middle
+
+# Introduction
+
+![Profile pic](https://avatars1.githubusercontent.com/u/8295080?s=160)
+
+Jared Rewerts
+
+Computer Engineer
+
+City of Edmonton
+
+---
+
+# Agenda
+
+1. Introduction
+1. Kubernetes
+1. Operators
+1. Installing Elastic Cloud on K8s
+1. Indexing Documents
+1. Searching
+1. Time Series Querying
+<!-- 1. Kibana -->
+1. APM
+  1. Producer
+  1. Consumer
+  1. RabbitMQ
+
+---
+
+![Kubernetes Icon](https://kubernetes.io/images/nav_logo2.svg)
+
+ - we'll be running everything on Google Kubernetes Engine
+ - check out Docker's local Kubernetes for an easy test environment
+
+---
+
+# Operators
+ - framework for managing lifecycle of stateful applications
+
+## Help with
+ - upgrading to new versions
+ - scaling cluster capacity
+ - cluster config
+ - scheduling backups
+
+---
+
+# Installing Elastic Cloud on K8s
+
+#### Install the CRD and Roles
+
+``` bash
+kubectl apply -f https://download.elastic.co/downloads/eck/0.9.0/all-in-one.yaml
+```
+
+---
+
+# Installing Elastic Cloud on K8s
+
+#### Create a cluster
+
+``` bash
+cat <<EOF | kubectl apply -f -
+apiVersion: elasticsearch.k8s.elastic.co/v1alpha1
+kind: Elasticsearch
+metadata:
+  name: quickstart
+spec:
+  version: 7.2.0
+  nodes:
+  - nodeCount: 1
+    config:
+      node.master: true
+      node.data: true
+      node.ingest: true
+EOF
+```
+
+---
+
+# Installing Elastic Cloud on K8s
+
+#### Get your credentials
+
+Elasticsearch comes with an admin user/password built in. 
+
+``` bash
+PASSWORD=$(kubectl get secret quickstart-es-elastic-user -o=jsonpath='{.data.elastic}' | base64 --decode)
+```
+
+---
+
+# Installing Elastic Cloud on K8s
+
+#### Forward your cluster's service
+
+The ES operator only creates ClusterIP services. This means we can't access them yet.
+
+``` bash
+kubectl port-forward service/quickstart-es-http 9200
+```
+
+---
+
+# Installing Elastic Cloud on K8s
+
+#### Check the health
+
+``` bash
+kubectl get elasticsearch
+```
+
+### Or
+
+``` bash
+curl -u "elastic:$PASSWORD" -k "https://localhost:9200"
+```
+###### The -k option turns off certificate verification
+
+---
+
+    </textarea>
+    <script src="https://remarkjs.com/downloads/remark-latest.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create();
+    </script>
+  </body>
+</html>
