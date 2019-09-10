@@ -50,12 +50,7 @@ City of Edmonton
 1. Installing Elastic Cloud on K8s
 1. Indexing Documents
 1. Searching
-1. Time Series Querying
-<!-- 1. Kibana -->
-1. APM
-  1. Producer
-  1. Consumer
-  1. RabbitMQ
+1. Questions
 
 ---
 
@@ -223,10 +218,72 @@ python src/csv-to-es.py -i council_reports -c https://localhost:9200 -f council_
 
 # Indexing documents
 
-#### Check on our indices
+#### Check on our new index
 
 ``` bash
-curl -u "elastic:$PASSWORD" -k "https://localhost:9200/_cat/indices?v"
+curl --cacert tls.crt -u "elastic:$PASSWORD" "https://localhost:9200/_cat/indices?v"
+```
+
+---
+
+# Searching
+
+#### Simple search
+
+``` bash
+curl --cacert tls.crt -u "elastic:$PASSWORD" "https://localhost:9200/council_reports/_search?q=social%20benefit"
+```
+
+---
+
+# Searching
+
+#### Response
+
+``` json
+{
+  "took": 31,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": {
+      "value": 249,
+      "relation": "eq"
+    },
+    "max_score": 7.006954,
+    "hits": [{truncated...}]
+  }
+}
+```
+---
+
+# Searching
+
+#### Response -> Hits
+
+``` json
+[
+  {
+    "_index": "council_reports",
+    "_type": "_doc",
+    "_id": "NwVIHG0BQlDYBMctvNOx",
+    "_score": 7.006954,
+    "_source": {
+      "id": "799",
+      "date": "20130522000000",
+      "source_url": "http://sirepub.edmonton.ca/sirepub/view.aspx?cabinet=published_meetings&fileid=224899",
+      "source_title": "Community Investment Operating Grant - Program Pri - 2013CAAB09-CIOG-Report 2014-2016 Priorities Guidelines-ToCSC.doc",
+      "parent_source_url": "http://sirepub.edmonton.ca/sirepub/mtgviewer.aspx?meetid=1005&doctype=AGENDA",
+      "parent_source_title": "Community Investment Operating Grant - Program Priorities and Guidelines for 2014-2016",
+      "text": "{truncated}... as outlined in Attachment 1 of the May 14, 2013, Community Services Advisory Board report 2013CAAB09, be approved. \t Report Summary \t This report recommends funding Program Priorities and Guidelines for not-for-profit Social Services, {truncated...}"
+    }
+  }
+]
 ```
 
     </textarea>
