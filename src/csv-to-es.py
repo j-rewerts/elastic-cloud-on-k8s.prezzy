@@ -1,5 +1,6 @@
-from elasticsearch import Elasticsearch, TransportError
+from elasticsearch import Elasticsearch, TransportError, RequestsHttpConnection
 from elasticsearch.helpers import streaming_bulk
+import certifi
 import time
 import getopt
 import sys
@@ -26,6 +27,7 @@ Optional fields
 -h (--help) Print this helpful text field.
 -u (--user) The user to connect to Elasticsearch as.
 -p (--password) The user's password.
+-x (--certificate) The certificate to use to connect to the cluster.
 """
 
 
@@ -66,16 +68,17 @@ def parse_args(args):
     """
     Parses the command line arguments. See 'help' for details.
     """
-    short_opts = 'hi:c:f:u:p:'
+    short_opts = 'hi:c:f:u:p:x:'
     long_opts = [
         'help',
         'index=',
         'connect=',
         'file=',
         'user=',
-        'password='
+        'password=',
+        'certificate='
     ]
-    index, hosts, csv_file, user, password = None, None, None, None, None
+    index, hosts, csv_file, user, password, cert = None, None, None, None, None, None
     try:
         opts, args = getopt.getopt(args, short_opts, long_opts)
     except getopt.GetoptError:
@@ -96,6 +99,8 @@ def parse_args(args):
             user = arg
         elif opt in ('-p', '--password'):
             password = arg
+        elif opt in ('-x', '--certificate'):
+            cert = arg
         else:
             print('Unknown flag: {}'.format(opt))
             sys.exit(2)
@@ -112,16 +117,18 @@ def parse_args(args):
         print('-f is required')
         print(help)
         sys.exit(2)
-    return index, hosts, csv_file, user, password
+    return index, hosts, csv_file, user, password, cert
 
 
-def main(index, hosts, csv_file, user, password):
+def main(index, hosts, csv_file, user, password, cert):
     hosts = parse_hosts(hosts)
-    es = None
+    options = {}
     if user and password:
-        es = Elasticsearch(hosts, http_auth=(user, password))
-    else:
-        es = Elasticsearch(hosts)
+        options['http_auth'] = (user, password)
+    if cert:
+        options['verify_certs'] = True
+        options['ca_certs'] = cert
+    es = Elasticsearch(hosts, **options)
     create_index(es, index)
 
     for ok, result in streaming_bulk(es, parse_reports(csv_file), index=index, max_retries=5):
@@ -136,7 +143,7 @@ def main(index, hosts, csv_file, user, password):
 
 if __name__ == '__main__':
     start = time.perf_counter()
-    index, hosts, csv_file, user, password = parse_args(sys.argv[1:])
-    main(index, hosts, csv_file, user, password)
+    index, hosts, csv_file, user, password, cert = parse_args(sys.argv[1:])
+    main(index, hosts, csv_file, user, password, cert)
     elapsed = time.perf_counter() - start
     print(f'Program completed in {elapsed:0.5f} seconds.')
