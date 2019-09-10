@@ -105,6 +105,12 @@ spec:
       node.master: true
       node.data: true
       node.ingest: true
+  http:
+    tls:
+      selfSignedCertificate:
+        subjectAltNames:
+        - ip: 127.0.0.1
+        - dns: localhost
 EOF
 ```
 
@@ -136,6 +142,16 @@ kubectl port-forward service/quickstart-es-http 9200
 
 # Installing Elastic Cloud on K8s
 
+#### Get our self-signed certificate
+
+``` bash
+kubectl get secret quickstart-es-http-certs-public -o=jsonpath="{$.data['*']}" | base64 --decode > tls.crt
+```
+
+---
+
+# Installing Elastic Cloud on K8s
+
 #### Check the health
 
 ``` bash
@@ -145,9 +161,9 @@ kubectl get elasticsearch
 ### Or
 
 ``` bash
-curl -u "elastic:$PASSWORD" -k "https://localhost:9200"
+curl --cacert tls.crt -u "elastic:$PASSWORD" "https://localhost:9200/_cat/health?v"
 ```
-###### The -k option turns off certificate verification
+###### We're validating this request with our self-signed certificate!
 
 
 ---
@@ -190,6 +206,7 @@ Optional fields
 -h (--help) Print this helpful text field.
 -u (--user) The user to connect to Elasticsearch as.
 -p (--password) The user's password.
+-x (--certificate) The certificate to use to connect to the cluster.
 ```
 
 ---
@@ -199,7 +216,7 @@ Optional fields
 #### Import our data
 
 ``` bash
-python src/csv-to-es.py -i council_reports -c https://localhost:9200 -f council_reports.csv -u elastic -p $PASSWORD
+python src/csv-to-es.py -i council_reports -c https://localhost:9200 -f council_reports.csv -u elastic -p $PASSWORD -x tls.crt
 ```
 
 ---
